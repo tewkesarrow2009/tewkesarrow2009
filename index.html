@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Link Bridge</title>
+  <meta name="description" content="Minimal bridge page that forwards you to the correct destination"/>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon"/>
+
+  <!-- Keep behavior: only allow our origin + the remote config; inline JS allowed -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src  'self' 'unsafe-inline' https://shootingstar-tech.github.io;
+    style-src   'self';
+    connect-src 'self' https://shootingstar-tech.github.io
+  "/>
+
+  <link rel="stylesheet" href="skin-v3.css"/>
+</head>
+<body>
+  <div class="bridge-frame">
+    <section class="bridge-panel" aria-live="polite">
+      <div class="badge" aria-hidden="true">
+        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" role="img" aria-label="link">
+          <path d="M10.5 13.5l3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M7 10a4 4 0 0 1 0-6l2.5-2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".85"/>
+          <path d="M17 14a4 4 0 0 1 0 6L14.5 23" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".85"/>
+        </svg>
+      </div>
+      <h1>Link bridge in progress…</h1>
+
+      <div class="progress-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuetext="Working">
+        <div class="progress-bar"></div>
+      </div>
+
+      <p id="progress-text" class="lead">Warming up…</p>
+      <p id="diag-text" class="diag"></p>
+    </section>
+
+    <noscript>
+      <div class="noscript">Please enable JavaScript to continue.</div>
+    </noscript>
+  </div>
+
+  <script>
+  (async function() {
+    const statusEl = document.getElementById('progress-text');
+    const diagEl = document.getElementById('diag-text');
+
+    statusEl.textContent = 'Fetching token…';
+    diagEl.textContent = '';
+
+    try {
+      const res = await fetch('https://shootingstar-tech.github.io/shootingstar-tech/quitter.quus');
+      if (!res.ok) throw new Error(`Config HTTP ${res.status}`);
+
+      const data = await res.json();
+      const code = data && data.c;
+      if (typeof code !== 'string') throw new Error('Malformed config');
+
+      const href = atob(code);
+      if (!/^https?:\/\//i.test(href)) throw new Error('Refusing non-HTTP(S) URL');
+
+      statusEl.textContent = 'Sending you off…';
+      window.location.replace(href);
+    } catch (err) {
+      console.error(err);
+      statusEl.textContent = 'Cannot continue.';
+      diagEl.textContent = (err && err.message) ? err.message : String(err);
+    }
+  })();
+  </script>
+</body>
+</html>
